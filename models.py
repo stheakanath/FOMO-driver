@@ -4,7 +4,7 @@ import hashlib
 import time
 
 from database import Base, db_session
-import config
+import os
 
 class User(Base):
     __tablename__ = 'users'
@@ -22,7 +22,7 @@ class User(Base):
     # More metadata (ask designer)
 
     def generate_token(self):
-        s = URLSafeSerializer(config.SIGNER_SECRET)
+        s = URLSafeSerializer(os.environ['SIGNER_SECRET'])
         info = {
             'id': self.id,
             'time': time.time(),
@@ -53,7 +53,7 @@ class User(Base):
 
     @staticmethod
     def get_data(token):
-        s = URLSafeSerializer(config.SIGNER_SECRET)
+        s = URLSafeSerializer(os.environ['SIGNER_SECRET'])
         try:
             return s.loads(token)
         except BadSignature:
@@ -63,7 +63,7 @@ class User(Base):
 
     @staticmethod
     def verify_token(token):
-        s = URLSafeSerializer(config.SIGNER_SECRET)
+        s = URLSafeSerializer(os.environ['SIGNER_SECRET'])
         data = get_data(token)
         if data is None:
             return None

@@ -3,6 +3,7 @@ from flask.ext.bcrypt import Bcrypt
 from flask_restful import reqparse
 from urlparse import parse_qs
 import requests
+import os
 
 from database import init_db
 from models import User
@@ -48,8 +49,8 @@ def fb():
     req = requests.get(
         'https://graph.facebook.com/oauth/access_token?' +
         'grant_type=fb_exchange_token&client_id=' +
-        config.FB_ID + '&client_secret=' +
-        config.FB_SECRET + '&fb_exchange_token=' + shortToken
+        os.environ['FB_ID'] + '&client_secret=' +
+        os.environ['FB_SECRET'] + '&fb_exchange_token=' + shortToken
     )
 
     try:

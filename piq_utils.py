@@ -1,5 +1,4 @@
 import soundcloud
-import config
 
 hip_hop_genres = ['hiphop', 'hip hop', 'Hip-hop & Rap', 'hip-hop']
 edm_genres = [] # TODO
