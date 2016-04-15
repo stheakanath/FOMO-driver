@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from flask.ext.bcrypt import Bcrypt
 from flask_restful import reqparse
-from urlparse import parse_qs
+from urllib.parse import parse_qs
 import requests
 import os
 
