@@ -2,6 +2,7 @@ from flask import Flask, request, abort
 from flask.ext.bcrypt import Bcrypt
 from flask_restful import reqparse
 from urllib.parse import parse_qs
+from waitress import serve
 import requests
 import os
 
@@ -88,4 +89,4 @@ def number():
 
 if __name__ ==  '__main__' :
     init_db()
-    app.run()
+    serve(app)
