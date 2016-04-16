@@ -1,20 +1,19 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text
 from itsdangerous import URLSafeSerializer
 import hashlib
 import time
 
-from database import Base, db_session
+from server import db
 import os
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'users'
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(80), default="")
-    password_hash = Column(Text)
-    is_facebook = Column(Boolean, default=False)
-    fb_id = Column(String(100), default="", index=True)
-    token_hash = Column(String(32))
-    number = Column(Integer, default=0)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    email = db.Column(db.Unicode(80), default="")
+    password_hash = db.Column(db.LargeBinary)
+    is_facebook = db.Column(db.Boolean, default=False)
+    fb_id = db.Column(db.Unicode(100), default="", index=True)
+    token_hash = db.Column(db.Unicode(32))
+    number = db.Column(db.Integer, default=0)
     # Is facebook
     # Email
     # List of saved songs
@@ -30,24 +29,24 @@ class User(Base):
             'fb_id': self.fb_id,
         }
         token = s.dumps(info)
-        self.token_hash = hashlib.md5(token).hexdigest()
+        self.token_hash = hashlib.md5(token.encode('utf-8')).hexdigest()
         return token
 
 
     def update_number(self, num):
         self.number = num
-        db_session.commit()
+        db.session.commit()
 
 
     @staticmethod
     def add_user(args):
         user = User()
 
-        for key, value in args.iteritems():
+        for key, value in args.items():
             setattr(user, key, value)
 
-        db_session.add(user)
-        db_session.commit()
+        db.session.add(user)
+        db.session.commit()
         return user
 
 
@@ -69,7 +68,7 @@ class User(Base):
             return None
         user = User.query.get(data['id'])
         # This block is for logging out other logged in devices (also possibly more secure)
-        if hashlib.md5(token).hexdigest() != user.token_hash:
+        if hashlib.md5(token.encode('utf-8')).hexdigest() != user.token_hash:
             # Token is old (someone logged in again on another device)
             return None
 
