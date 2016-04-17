@@ -28,6 +28,7 @@ def check_password_hash(pw_hash, password):
 
     return safe_str_cmp(bcrypt.hashpw(password, pw_hash), pw_hash)
 
+
 @api.route('/api/loginreg/email', methods = ['GET', 'PUT'])
 def loginregister():
     parser = reqparse.RequestParser()
@@ -76,7 +77,7 @@ def fb():
         # Invalid token
         abort(401)
 
-    md5token = hashlib.md5(token).hexdigest()
+    md5token = hashlib.md5(token.encode('utf-8')).hexdigest()
     req = requests.get('https://graph.facebook.com/me?access_token=' + token)
     fb_id = req.json()['id']
     user = User.query.filter_by(fb_id=fb_id).first()
