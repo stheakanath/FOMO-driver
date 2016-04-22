@@ -3,6 +3,8 @@ from flask_restful import reqparse
 from urllib.parse import parse_qs
 from werkzeug.security import safe_str_cmp
 import bcrypt
+import hashlib
+import hmac
 
 import requests
 import os
@@ -27,6 +29,13 @@ def check_password_hash(pw_hash, password):
         password = bytes(password, 'utf-8')
 
     return safe_str_cmp(bcrypt.hashpw(password, pw_hash), pw_hash)
+
+def gen_proof(app_secret, access_token):
+    return hmac.new (
+        app_secret.encode('utf-8'),
+        msg=access_token.encode('utf-8'),
+        digestmod=hashlib.sha256
+    ).hexdigest()
 
 
 @api.route('/api/loginreg/email', methods = ['GET', 'PUT'])
@@ -78,7 +87,14 @@ def fb():
         abort(401)
 
     md5token = hashlib.md5(token.encode('utf-8')).hexdigest()
-    req = requests.get('https://graph.facebook.com/me?access_token=' + token)
+    appsecret_proof = gen_proof(os.environ['FB_SECRET'], token)
+    req = requests.get('https://graph.facebook.com/me?appsecret_proof=' +
+        appsecret_proof + '&access_token=' + token)
+    print('#####################')
+    print(req.json())
+    print('#####################')
+    print(token)
+    print('#####################')
     fb_id = req.json()['id']
     user = User.query.filter_by(fb_id=fb_id).first()
 
