@@ -12,7 +12,7 @@ class User(db.Model):
     password_hash = db.Column(db.LargeBinary)
     is_facebook = db.Column(db.Boolean, default=False)
     fb_id = db.Column(db.Unicode(100), default="", index=True)
-    token_hash = db.Column(db.Unicode(32))
+    token_hash = db.Column(db.LargeBinary)
     number = db.Column(db.Integer, default=0)
     # Is facebook
     # Email

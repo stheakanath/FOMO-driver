@@ -72,7 +72,7 @@ def fb():
     )
 
     try:
-        token = parse_qs(r.text)['access_token'][0]
+        token = parse_qs(req.text)['access_token'][0]
     except:
         # Invalid token
         abort(401)
