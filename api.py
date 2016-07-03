@@ -125,20 +125,42 @@ def fb():
     return user.generate_token()
 
 
-@api.route('/api/events', methods = ['GET'])
+@api.route('/api/events/artists', methods=['GET'])
+def get_nearby_events_for_artist():
+    artists = [
+        'Flume',
+        'Kanye West',
+        'Drake',
+        'Calvin Harris',
+        'Rihanna',
+        'Justin Timberlake',
+        'The Chainsmokers'
+    ]
+
+
+@api.route('/api/events', methods=['GET'])
 def get_nearby_events():
     parser = reqparse.RequestParser()
     parser.add_argument('zip_code', required=True)
     parser.add_argument('num_results', required=True)
+    parser.add_argument('artist')
     args = parser.parse_args()
     query_dict = {
         'classificationName': 'music',
         'postalCode': args['zip_code'],
         'size': args['num_results']
     }
+    if args['artist']:
+        query_dict['artist'] = args['artist']
     url = get_query(DISCOVERY_V2_BASE, 'events', query_dict)
+    print('############################')
+    print(url)
+    print('############################')
     response = requests.get(url)
     data = json.loads(response.text)
+    print(data)
+    if data['page']['totalElements'] == 0:  # no results
+        return jsonify({'results': []})
     trimmed_data = [event for event in data['_embedded']['events']]
     return jsonify({'results': trimmed_data})
 
