@@ -139,13 +139,7 @@ def get_nearby_events():
     url = get_query(DISCOVERY_V2_BASE, 'events', query_dict)
     response = requests.get(url)
     data = json.loads(response.text)
-    trimmed_data = []
-    for event in data['_embedded']['events']:
-        trimmed_data.append({
-            'name': event['name'] if 'name' in event else '',
-            'images': event['images'] if 'images' in event else '',
-            'venues': event['_embedded']['venues'] if 'venues' in event['_embedded'] else ''
-        })
+    trimmed_data = [event for event in data['_embedded']['events']]
     return jsonify({'results': trimmed_data})
 
 
