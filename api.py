@@ -1,9 +1,11 @@
-from flask import Flask, Blueprint, request, abort
+from flask import Flask, Blueprint, request, abort, jsonify
 from flask_restful import reqparse
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 from werkzeug.security import safe_str_cmp
+from collections import defaultdict
 import bcrypt
 import hashlib
+import json
 import hmac
 
 import requests
@@ -12,6 +14,22 @@ import os
 api = Blueprint('api', __name__)
 
 from models import User
+
+##################################################
+# TODO:
+#
+# - Don't hardcode stuff
+# - Use geocode instead of precise zipcode search
+#
+##################################################
+
+# Ticketmaster API constants
+DISCOVERY_V2_BASE = 'https://app.ticketmaster.com/discovery/v2'
+AUTH = {'apikey': 'EKDjnHhA4O31rZKAAByw8YAFszvX1A2x'}
+
+def get_query(base, endpoint, query_dict):
+    return os.path.join(base, endpoint + '.json?', urlencode({**AUTH, **query_dict}))
+
 
 def generate_password_hash(password):
     if not password:
@@ -22,6 +40,7 @@ def generate_password_hash(password):
 
     return bcrypt.hashpw(password, bcrypt.gensalt(12))
 
+
 def check_password_hash(pw_hash, password):
     if isinstance(pw_hash, str):
         pw_hash = bytes(pw_hash, 'utf-8')
@@ -29,6 +48,7 @@ def check_password_hash(pw_hash, password):
         password = bytes(password, 'utf-8')
 
     return safe_str_cmp(bcrypt.hashpw(password, pw_hash), pw_hash)
+
 
 def gen_proof(app_secret, access_token):
     return hmac.new (
@@ -68,6 +88,7 @@ def loginregister():
         # Password is incorrect
         abort(401)
 
+
 @api.route('/api/loginreg/fb', methods = ['PUT'])
 def fb():
     parser = reqparse.RequestParser()
@@ -102,6 +123,31 @@ def fb():
         user = User.add_user({'is_facebook': True, 'fb_id': fb_id})
 
     return user.generate_token()
+
+
+@api.route('/api/events', methods = ['GET'])
+def get_nearby_events():
+    parser = reqparse.RequestParser()
+    parser.add_argument('zip_code', required=True)
+    parser.add_argument('num_results', required=True)
+    args = parser.parse_args()
+    query_dict = {
+        'classificationName': 'music',
+        'postalCode': args['zip_code'],
+        'size': args['num_results']
+    }
+    url = get_query(DISCOVERY_V2_BASE, 'events', query_dict)
+    response = requests.get(url)
+    data = json.loads(response.text)
+    trimmed_data = []
+    for event in data['_embedded']['events']:
+        trimmed_data.append({
+            'name': event['name'] if 'name' in event else '',
+            'images': event['images'] if 'images' in event else '',
+            'venues': event['_embedded']['venues'] if 'venues' in event['_embedded'] else ''
+        })
+    return jsonify({'results': trimmed_data})
+
 
 @api.route('/api/test', methods = ['GET', 'POST'])
 def number():
